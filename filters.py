@@ -70,33 +70,52 @@ class AttributeFilter:
         raise UnsupportedCriterionError
 
     def __repr__(self):
+        """Get machine representation of the object."""
         return f"{self.__class__.__name__}(op=operator.{self.op.__name__}, value={self.value})"
 
-class Date(AttributeFilter):
-    @classmethod
-    def get(cls, approach):
-        return approach.time.date()
+class HazardousFilter(AttributeFilter):
+    """A child class of `AttributeFilter` for Hazardous filtering."""
 
-class Velocity(AttributeFilter):
     @classmethod
     def get(cls, approach):
-        return approach.velocity
-
-class Diameter(AttributeFilter):
-    @classmethod
-    def get(cls, approach):
-        return approach.neo.diameter
-
-class Distance(AttributeFilter):
-    @classmethod
-    def get(cls, approach):
-        return approach.distance
-
-class Hazardous(AttributeFilter):
-    @classmethod
-    def get(cls, approach):
+        """Get Hazardous boolean from a close approach."""
         return approach.neo.hazardous
 
+
+class DateFilter(AttributeFilter):
+    """A child class of `AttributeFilter` for Date filtering."""
+
+    @classmethod
+    def get(cls, approach):
+        """Get time.date() from a close approach."""
+        return approach.time.date()
+
+
+class VelocityFilter(AttributeFilter):
+    """A child class of `AttributeFilter` for Velocity filtering."""
+
+    @classmethod
+    def get(cls, approach):
+        """Get velocity from a close approach."""
+        return approach.velocity
+
+
+class DistanceFilter(AttributeFilter):
+    """A child class of `AttributeFilter` for Distance filtering."""
+
+    @classmethod
+    def get(cls, approach):
+        """Get distance from a close approach."""
+        return approach.distance
+
+
+class DiameterFilter(AttributeFilter):
+    """A child class of `AttributeFilter` for Diameter filtering."""
+
+    @classmethod
+    def get(cls, approach):
+        """Get neo.diameter from a close approach."""
+        return approach.neo.diameter
 
 
 def create_filters(
@@ -136,37 +155,50 @@ def create_filters(
     :return: A collection of filters for use with `query`.
     """
     filters = []
-    if date is not None:
-        f = Date(operator.eq, date)
+    if date:
+        f = DateFilter(operator.eq, date)
         filters.append(f)
-    if start_date is not None:
-        f = Date(operator.ge, start_date)
+
+    if start_date:
+        f = DateFilter(operator.ge, start_date)
         filters.append(f)
-    if end_date is not None:
-        f = Date(operator.le, end_date)
+
+    if end_date:
+        f = DateFilter(operator.le, end_date)
         filters.append(f)
-    if hazardous is not None:
-        f = Hazardous(operator.ne, bool(hazardous))
+
+    if distance_min:
+        f = DistanceFilter(operator.ge, distance_min)
         filters.append(f)
-    if distance_min is not None:
-        f = Distance(operator.ge, float(distance_min))
+
+    if distance_max:
+        f = DistanceFilter(operator.le, distance_max)
         filters.append(f)
-    if distance_max is not None:
-        f = Distance(operator.le, float(distance_max))
+
+    if velocity_min:
+        f = VelocityFilter(operator.ge, velocity_min)
         filters.append(f)
-    if diameter_min is not None:
-        f = Diameter(operator.ge, float(diameter_min))
+
+    if velocity_max:
+        f = VelocityFilter(operator.le, velocity_max)
         filters.append(f)
-    if diameter_max is not None:
-        f = Diameter(operator.le, float(diameter_max))
+
+    if diameter_min:
+        f = DiameterFilter(operator.ge, diameter_min)
         filters.append(f)
-    if velocity_min is not None:
-        f = Velocity(operator.ge, float(velocity_min))
+
+    if diameter_max:
+        f = DiameterFilter(operator.le, diameter_max)
         filters.append(f)
-    if velocity_max is not None:
-        f = Velocity(operator.le, float(velocity_max))
+
+    if hazardous:
+        f = HazardousFilter(operator.eq, True)
         filters.append(f)
-    return ()
+    elif hazardous is False:
+        f = HazardousFilter(operator.eq, False)
+        filters.append(f)
+
+    return filters 
 
 
 def limit(iterator, n=None):
@@ -178,7 +210,6 @@ def limit(iterator, n=None):
     :param n: The maximum number of values to produce.
     :yield: The first (at most) `n` values from the iterator.
     """
-    # TODO: Produce at most `n` values from the given iterator.
     if not n or n == 0:
         return iterator
     else:
