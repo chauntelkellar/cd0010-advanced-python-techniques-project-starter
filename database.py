@@ -21,8 +21,23 @@ class NEODatabase:
     help fetch NEOs by primary designation or by name and to help speed up
     querying for close approaches that match criteria.
     """
+
     def __init__(self, neos, approaches):
+        """Create a new `NEODatabase`.
         
+        As a precondition, this constructor assumes that the collections of NEOs
+        and close approaches haven't yet been linked - that is, the
+        `.approaches` attribute of each `NearEarthObject` resolves to an empty
+        collection, and the `.neo` attribute of each `CloseApproach` is None.
+        However, each `CloseApproach` has an attribute (`._designation`) that
+        matches the `.designation` attribute of the corresponding NEO. This
+        constructor modifies the supplied NEOs and close approaches to link them
+        together - after it's done, the `.approaches` attribute of each NEO has
+        a collection of that NEO's close approaches, and the `.neo` attribute of
+        each close approach references the appropriate NEO.
+        :param neos: A collection of `NearEarthObject`s.
+        :param approaches: A collection of `CloseApproach`es.
+        """
         self._neos = neos
         self._approaches = approaches
         self._designation_neo = {}  # A dictionary of the neo.designation: neo object
